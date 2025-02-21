@@ -5,7 +5,6 @@ from ..smp import *
 from PIL import Image
 import torch
 
-
 class Chameleon(BaseModel):
 
     INSTALL_REQ = False
@@ -17,12 +16,23 @@ class Chameleon(BaseModel):
         except Exception as e:
             logging.critical('Please install the latest transformers.')
             raise e
+        
+        
+        self.device_map = kwargs["device_map"] if "device_map" in kwargs else "cuda"
+        apply_quantization = kwargs["apply_quantization"] if "apply_quantization" in kwargs is not None else False
 
         processor = ChameleonProcessor.from_pretrained(model_path)
-        model = ChameleonForConditionalGeneration.from_pretrained(model_path, torch_dtype=torch.bfloat16)
+        model = ChameleonForConditionalGeneration.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map=self.device_map, quantization_config=kwargs ["quant_config"]) if apply_quantization else ChameleonForConditionalGeneration.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map=self.device_map)
 
-        self.model = model.cuda().eval()
+        self.model = model
         self.processor = processor
+
+        if "apply_quantization" in kwargs:
+            del kwargs["apply_quantization"]
+        if "device_map" in kwargs:
+            del kwargs['device_map']
+        if "quant_config" in kwargs:
+            del kwargs['quant_config']
 
     def generate_inner(self, message, dataset=None):
         content, images = '', []
@@ -38,7 +48,7 @@ class Chameleon(BaseModel):
             images=images,
             padding=True,
             return_tensors='pt'
-        ).to(device='cuda', dtype=torch.bfloat16)
+        ).to(device=self.device_map, dtype=torch.bfloat16)
         generate_ids = self.model.generate(**inputs, max_new_tokens=2048)
         input_token_len = inputs.input_ids.shape[1]
         text = self.processor.batch_decode(

@@ -26,11 +26,21 @@ class Janus(BaseModel):
         self.model_path = model_path
         from janus.models import VLChatProcessor
 
+        self.device_map = kwargs["device_map"] if "device_map" in kwargs else "cuda"
+        apply_quantization = kwargs["apply_quantization"] if "apply_quantization" in kwargs else False
+
         self.vl_chat_processor = VLChatProcessor.from_pretrained(model_path)
         self.tokenizer = self.vl_chat_processor.tokenizer
 
-        model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True)
-        self.model = model.to(torch.bfloat16).cuda().eval()
+        model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, device_map=self.device_map,torch_dtype=torch.bfloat16, quantization_config=kwargs ["quant_config"]) if apply_quantization else AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, device_map=self.device_map,torch_dtype=torch.bfloat16)
+        self.model = model
+
+        if "apply_quantization" in kwargs:
+            del kwargs["apply_quantization"]
+        if "device_map" in kwargs:
+            del kwargs['device_map']
+        if "quant_config" in kwargs:
+            del kwargs['quant_config']
 
         torch.cuda.empty_cache()
         default_kwargs = dict(

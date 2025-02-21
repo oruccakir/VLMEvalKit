@@ -1,6 +1,7 @@
 from vlmeval.vlm import *
 from vlmeval.api import *
 from functools import partial
+from transformers import BitsAndBytesConfig
 
 PandaGPT_ROOT = None
 MiniGPT4_ROOT = None
@@ -320,9 +321,17 @@ deepseekvl2_series = {
     'deepseek_vl2': partial(DeepSeekVL2, model_path='deepseek-ai/deepseek-vl2'),
 }
 
+
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_compute_dtype=torch.float16
+)
+
+
 janus_series = {
     'Janus-1.3B': partial(Janus, model_path='deepseek-ai/Janus-1.3B'),
-    'Janus-Pro-7B': partial(Janus, model_path='deepseek-ai/Janus-Pro-7B'),
+    'Janus-Pro-7B': partial(Janus, model_path='deepseek-ai/Janus-Pro-7B',apply_quantization=True, device_map="cuda", quant_config=bnb_config),
 }
 
 cogvlm_series = {
@@ -343,7 +352,7 @@ cambrian_series = {
 }
 
 chameleon_series = {
-    'chameleon_7b': partial(Chameleon, model_path='facebook/chameleon-7b'),
+    'chameleon_7b': partial(Chameleon, model_path='facebook/chameleon-7b', apply_quantization=True, device_map="cuda", quant_config=bnb_config),
     'chameleon_30b': partial(Chameleon, model_path='facebook/chameleon-30b'),
 }
 
