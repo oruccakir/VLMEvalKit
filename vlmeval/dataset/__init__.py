@@ -45,6 +45,9 @@ from .video_dataset_config import *
 from ..smp import *
 
 
+from .mix_modal import MixModalDataSet
+
+
 class ConcatDataset(ImageBaseDataset):
     # This dataset takes multiple dataset names as input and aggregate them into a single dataset.
     # Each single dataset should not have a field named `SUB_DATASET`
@@ -141,6 +144,11 @@ IMAGE_DATASET = [
     ImageShortQADataset
 ]
 
+# add all mix modal datasets here
+MIX_MODAL_DATA_SET = [
+    MixModalDataSet
+]
+
 VIDEO_DATASET = [
     MMBenchVideo, VideoMME, MVBench, MVBench_MP4, LongVideoBench,
     MLVU, MLVU_MCQ, MLVU_OpenEnded,
@@ -158,7 +166,7 @@ CUSTOM_DATASET = [
 
 DATASET_COLLECTION = [ConcatDataset, ConcatVideoDataset]
 
-DATASET_CLASSES = IMAGE_DATASET + VIDEO_DATASET + TEXT_DATASET + CUSTOM_DATASET + DATASET_COLLECTION
+DATASET_CLASSES = IMAGE_DATASET + VIDEO_DATASET + TEXT_DATASET + CUSTOM_DATASET + DATASET_COLLECTION + MIX_MODAL_DATA_SET
 SUPPORTED_DATASETS = []
 for DATASET_CLS in DATASET_CLASSES:
     SUPPORTED_DATASETS.extend(DATASET_CLS.supported_datasets())
