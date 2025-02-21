@@ -100,7 +100,14 @@ class ImageBaseDataset:
                 from ..tools import LOCALIZE
                 LOCALIZE(data_path, local_path)
             data_path = local_path
-        return load(data_path)
+
+        data = load(data_path)
+        
+        # this is just to see the distinct subset of the dataset
+        data = data.drop_duplicates(subset=["category"])
+        print(data) # print the dataset
+
+        return data
 
     def dump_image(self, line):
         os.makedirs(self.img_root, exist_ok=True)
