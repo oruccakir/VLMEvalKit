@@ -331,7 +331,7 @@ bnb_config = BitsAndBytesConfig(
 
 janus_series = {
     'Janus-1.3B': partial(Janus, model_path='deepseek-ai/Janus-1.3B'),
-    'Janus-Pro-7B': partial(Janus, model_path='deepseek-ai/Janus-Pro-7B',apply_quantization=False, device_map="cpu", quant_config=bnb_config),
+    'Janus-Pro-7B': partial(Janus, model_path='deepseek-ai/Janus-Pro-7B',apply_quantization=True, device_map="cuda", quant_config=bnb_config),
 }
 
 cogvlm_series = {
