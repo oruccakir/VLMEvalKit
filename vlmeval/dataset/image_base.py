@@ -2,6 +2,7 @@ import pandas as pd
 from abc import abstractmethod
 from ..smp import *
 
+USE_UNIQUE_SUBSET = False
 
 def img_root_map(dataset):
     if 'MM_NIAH' in dataset:
@@ -104,8 +105,9 @@ class ImageBaseDataset:
         data = load(data_path)
         
         # this is just to see the distinct subset of the dataset
-        data = data.drop_duplicates(subset=["category"])
-        print(data) # print the dataset
+        if USE_UNIQUE_SUBSET:
+            data = data.drop_duplicates(subset=["category"])
+            print(data) # print the dataset
 
         return data
 
