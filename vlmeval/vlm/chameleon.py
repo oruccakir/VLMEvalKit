@@ -41,6 +41,8 @@ class Chameleon(BaseModel):
         processor = ChameleonProcessor.from_pretrained(model_path)
         model = ChameleonForConditionalGeneration.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map=self.device_map, quantization_config=qunatization_config) if apply_quantization else ChameleonForConditionalGeneration.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map=self.device_map)
 
+        self.save_embeddings = kwargs["config"]["save_embedding_flag"] if "config" in kwargs else False
+
         self.model = model
         self.processor = processor
 
@@ -50,6 +52,8 @@ class Chameleon(BaseModel):
             del kwargs['device_map']
         if "quant_config" in kwargs:
             del kwargs['quant_config']
+        if "config" in kwargs:
+            del kwargs['config']
 
         self.idx = 0
 
@@ -61,14 +65,6 @@ class Chameleon(BaseModel):
             elif x['type'] == 'image':
                 content += '<image>\n'
                 images.append(Image.open(x['value']))
-
-        embedd_dir_path=f"{CHAMELEON_MODEL_EMBEDDINS_DIR_PATH}/{dataset}"
-        if not os.path.exists(embedd_dir_path):
-            os.makedirs(embedd_dir_path)
-        
-        embedding_file_path = f"{embedd_dir_path}/embedding_{self.idx}.bin"
-        self.idx += 1
-        
     
         inputs = self.processor(
             text=[content],
@@ -77,7 +73,15 @@ class Chameleon(BaseModel):
             return_tensors='pt'
         ).to(device=self.device_map, dtype=torch.bfloat16)
 
-        self.compute_and_save_embeddings(inputs,embedding_file_path)
+        if self.save_embeddings:
+            embedd_dir_path=f"{CHAMELEON_MODEL_EMBEDDINS_DIR_PATH}/{dataset}"
+            if not os.path.exists(embedd_dir_path):
+                os.makedirs(embedd_dir_path)
+            
+            embedding_file_path = f"{embedd_dir_path}/embedding_{self.idx}.bin"
+            self.idx += 1
+
+            self.compute_and_save_embeddings(inputs,embedding_file_path)
 
         generate_ids = self.model.generate(**inputs, max_new_tokens=2048)
         input_token_len = inputs.input_ids.shape[1]

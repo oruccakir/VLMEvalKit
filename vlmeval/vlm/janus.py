@@ -49,6 +49,8 @@ class Janus(BaseModel):
         model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, device_map=self.device_map,torch_dtype=torch.bfloat16, quantization_config=qunatization_config) if apply_quantization else AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, device_map=self.device_map,torch_dtype=torch.bfloat16)
         self.model = model
 
+        self.save_embeddings = kwargs["config"]["save_embedding_flag"] if "config" in kwargs else False
+
         self.idx = 0
 
         if "apply_quantization" in kwargs:
@@ -102,14 +104,6 @@ class Janus(BaseModel):
         else:
             self.vl_chat_processor.system_prompt = "You are a helpful assistant. Please answer truthfully and write out your thinking step by step to be sure you get the right answer."  # noqa: E501
 
-        
-        embedd_dir_path=f"{DEEPSEEK_MODEL_EMBEDDINS_DIR_PATH}/{dataset}"
-        if not os.path.exists(embedd_dir_path):
-            os.makedirs(embedd_dir_path)
-        
-        embedding_file_path = f"{embedd_dir_path}/embedding_{self.idx}.bin"
-        self.idx += 1
-
         conversation = self.prepare_inputs(message)
         from janus.utils.io import load_pil_images
         pil_images = load_pil_images(conversation)
@@ -117,9 +111,18 @@ class Janus(BaseModel):
         prepare_inputs = prepare_inputs.to(self.model.device, dtype=torch.bfloat16)
         inputs_embeds = self.model.prepare_inputs_embeds(**prepare_inputs)
 
-        embds = inputs_embeds
-        embds.cpu().flatten().float().detach().numpy().tofile(embedding_file_path)
-        print(f"Embeddings saved to {embedding_file_path} with {embds.shape} tokens")
+
+        if self.save_embeddings:
+            embedd_dir_path=f"{DEEPSEEK_MODEL_EMBEDDINS_DIR_PATH}/{dataset}"
+            if not os.path.exists(embedd_dir_path):
+                os.makedirs(embedd_dir_path)
+            
+            embedding_file_path = f"{embedd_dir_path}/embedding_{self.idx}.bin"
+            self.idx += 1
+
+            embds = inputs_embeds
+            embds.cpu().flatten().float().detach().numpy().tofile(embedding_file_path)
+            print(f"Embeddings saved to {embedding_file_path} with {embds.shape} tokens")
 
         outputs = self.model.language_model.generate(
             inputs_embeds=inputs_embeds,

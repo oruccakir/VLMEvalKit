@@ -8,7 +8,9 @@ from ...smp import *
 from ...dataset import DATASET_TYPE, DATASET_MODALITY
 import copy
 import requests
+from transformers import BitsAndBytesConfig
 
+from imports import LLAVA_MODEL_EMDEDINGS_DIR_PATH
 
 class LLaVA(BaseModel):
 
@@ -279,12 +281,45 @@ class LLaVA_Next(BaseModel):
                     self.model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True
                 )
             else:
+                
+                self.device_map = kwargs["config"]["device_map"] if "config" in kwargs else "cuda"
+                apply_quantization = kwargs["config"]["quantized"] if "config" in kwargs else False
+
+                if kwargs["config"]["quant_type"] == "quant4":
+                    qunatization_config = bnb_config = BitsAndBytesConfig(
+                        load_in_4bit=True,
+                        bnb_4bit_quant_type="nf4",
+                        bnb_4bit_compute_dtype=torch.float16
+                    )
+                elif kwargs["config"]["quant_type"] == "quant8":
+                    qunatization_config = bnb_config = BitsAndBytesConfig(
+                        load_in_8bit=True,
+                        bnb_8bit_quant_type="nf8",
+                        bnb_8bit_compute_dtype=torch.float16
+                    )
+
                 model = LlavaNextForConditionalGeneration.from_pretrained(
-                    self.model_path, torch_dtype=torch.float16, low_cpu_mem_usage=True
+                    self.model_path, torch_dtype=torch.bfloat16, device_map=self.device_map, quantization_config=qunatization_config
+                ) if apply_quantization else LlavaNextForConditionalGeneration.from_pretrained(
+                    self.model_path, torch_dtype=torch.bfloat16, device_map=self.device_map
                 )
 
-        model = model.eval()
-        self.model = model.cuda()
+                self.save_embeddings = kwargs["config"]["save_embedding_flag"] if "config" in kwargs else False
+
+                if "apply_quantization" in kwargs:
+                    del kwargs["apply_quantization"]
+                if "device_map" in kwargs:
+                    del kwargs['device_map']
+                if "quant_config" in kwargs:
+                    del kwargs['quant_config']
+                if "config" in kwargs:
+                    del kwargs['config']
+
+        #model = model.eval()
+        self.model = model
+
+        self.idx = 0
+
         kwargs_default = dict(
             do_sample=False, temperature=0, max_new_tokens=2048, top_p=None, num_beams=1
         )
@@ -396,12 +431,32 @@ class LLaVA_Next(BaseModel):
             conversation, add_generation_prompt=True
         )
         inputs = self.processor(prompt, images, return_tensors="pt").to(
-            "cuda", torch.float16
+            self.device_map, torch.bfloat16
         )
+
+        if self.save_embeddings:
+            embedd_dir_path=f"{LLAVA_MODEL_EMDEDINGS_DIR_PATH}/{dataset}"
+            if not os.path.exists(embedd_dir_path):
+                os.makedirs(embedd_dir_path)
+            
+            embedding_file_path = f"{embedd_dir_path}/embedding_{self.idx}.bin"
+            self.idx += 1
+
+            self.compute_and_save_embeddings(inputs, embedding_file_path)
+
         output = self.model.generate(**inputs, **self.kwargs)
         answer = self.processor.decode(output[0], skip_special_token=True)
         answer = self.output_process(answer)
         return answer
+    
+    def compute_and_save_embeddings(self, inputs, embedding_file_path):
+        self.model.save_embedding_flag = True
+        self.model.embedding_file_path = embedding_file_path
+        try :
+            self.model.generate(**inputs)
+        except Exception as e:
+            pass
+        self.model.save_embedding_flag = False
 
 
 class LLaVA_Next2(BaseModel):

@@ -173,7 +173,7 @@ llava_series = {
     'sharegpt4v_13b': partial(LLaVA, model_path='Lin-Chen/ShareGPT4V-13B'),
     'llava_next_vicuna_7b': partial(LLaVA_Next, model_path='llava-hf/llava-v1.6-vicuna-7b-hf'),
     'llava_next_vicuna_13b': partial(LLaVA_Next, model_path='llava-hf/llava-v1.6-vicuna-13b-hf'),
-    'llava_next_mistral_7b': partial(LLaVA_Next, model_path='llava-hf/llava-v1.6-mistral-7b-hf'),
+    'llava_7b': partial(LLaVA_Next, model_path='llava-hf/llava-v1.6-mistral-7b-hf',config=config["llava_7b_config"]),
     'llava_next_yi_34b': partial(LLaVA_Next, model_path='llava-hf/llava-v1.6-34b-hf'),
     'llava_next_llama3': partial(LLaVA_Next, model_path='llava-hf/llama3-llava-next-8b-hf'),
     'llava_next_72b': partial(LLaVA_Next, model_path='llava-hf/llava-next-72b-hf'),
@@ -334,7 +334,8 @@ deepseekvl2_series = {
 
 janus_series = {
     'Janus-1.3B': partial(Janus, model_path='deepseek-ai/Janus-1.3B'),
-    'Janus-Pro-7B': partial(Janus, model_path='deepseek-ai/Janus-Pro-7B',config=config["deepseek_janus_pro_7b_config"]),
+    #'Janus-Pro-7B': partial(Janus, model_path='deepseek-ai/Janus-Pro-7B',config=config["deepseek_janus_pro_7b_config"]),
+    'deepseek_janus_pro_7b': partial(Janus, model_path='deepseek-ai/Janus-Pro-7B',config=config["deepseek_janus_pro_7b_config"]),
 }
 
 cogvlm_series = {
