@@ -17,6 +17,14 @@ RBDash_ROOT = None
 VITA_ROOT = None
 LLAVA_V1_7B_MODEL_PTH = 'Please set your local path to LLaVA-7B-v1.1 here, the model weight is obtained by merging LLaVA delta weight based on vicuna-7b-v1.1 in https://github.com/haotian-liu/LLaVA/blob/main/docs/MODEL_ZOO.md with vicuna-7b-v1.1. '
 
+
+import json
+from imports import REPO_PATH
+with open(f"{REPO_PATH}/config.json") as f:
+    config = json.load(f)
+
+
+
 video_models = {
     'Video-LLaVA-7B':partial(VideoLLaVA, model_path='LanguageBind/Video-LLaVA-7B'),
     'Video-LLaVA-7B-HF':partial(VideoLLaVA_HF, model_path='LanguageBind/Video-LLaVA-7B-hf'),
@@ -322,16 +330,11 @@ deepseekvl2_series = {
 }
 
 
-bnb_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_quant_type="nf4",
-    bnb_4bit_compute_dtype=torch.float16
-)
 
 
 janus_series = {
     'Janus-1.3B': partial(Janus, model_path='deepseek-ai/Janus-1.3B'),
-    'Janus-Pro-7B': partial(Janus, model_path='deepseek-ai/Janus-Pro-7B',apply_quantization=True, device_map="cuda", quant_config=bnb_config),
+    'Janus-Pro-7B': partial(Janus, model_path='deepseek-ai/Janus-Pro-7B',config=config["deepseek_janus_pro_7b_config"]),
 }
 
 cogvlm_series = {
@@ -352,7 +355,7 @@ cambrian_series = {
 }
 
 chameleon_series = {
-    'chameleon_7b': partial(Chameleon, model_path='facebook/chameleon-7b', apply_quantization=True, device_map="cuda", quant_config=bnb_config),
+    'chameleon_7b': partial(Chameleon, model_path='facebook/chameleon-7b',config=config["chameleon_7b_config"]),
     'chameleon_30b': partial(Chameleon, model_path='facebook/chameleon-30b'),
 }
 

@@ -1,11 +1,12 @@
 import sys
 import torch
-from transformers import AutoModelForCausalLM, AutoConfig
+from transformers import AutoModelForCausalLM, AutoConfig,BitsAndBytesConfig
 import warnings
 from .base import BaseModel
 from ..smp import *
 from ..dataset import DATASET_TYPE
 
+from imports import DEEPSEEK_MODEL_EMBEDDINS_DIR_PATH
 
 class Janus(BaseModel):
 
@@ -26,14 +27,29 @@ class Janus(BaseModel):
         self.model_path = model_path
         from janus.models import VLChatProcessor
 
-        self.device_map = kwargs["device_map"] if "device_map" in kwargs else "cuda"
-        apply_quantization = kwargs["apply_quantization"] if "apply_quantization" in kwargs else False
+        self.device_map = kwargs["config"]["device_map"] if "config" in kwargs else "cuda"
+        apply_quantization = kwargs["config"]["quantized"] if "config" in kwargs else False
+
+        if kwargs["config"]["quant_type"] == "quant4":
+            qunatization_config = bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_compute_dtype=torch.float16
+            )
+        elif kwargs["config"]["quant_type"] == "quant8":
+            qunatization_config = bnb_config = BitsAndBytesConfig(
+                load_in_8bit=True,
+                bnb_8bit_quant_type="nf8",
+                bnb_8bit_compute_dtype=torch.float16
+            )
 
         self.vl_chat_processor = VLChatProcessor.from_pretrained(model_path)
         self.tokenizer = self.vl_chat_processor.tokenizer
 
-        model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, device_map=self.device_map,torch_dtype=torch.bfloat16, quantization_config=kwargs ["quant_config"]) if apply_quantization else AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, device_map=self.device_map,torch_dtype=torch.bfloat16)
+        model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, device_map=self.device_map,torch_dtype=torch.bfloat16, quantization_config=qunatization_config) if apply_quantization else AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, device_map=self.device_map,torch_dtype=torch.bfloat16)
         self.model = model
+
+        self.idx = 0
 
         if "apply_quantization" in kwargs:
             del kwargs["apply_quantization"]
@@ -41,6 +57,8 @@ class Janus(BaseModel):
             del kwargs['device_map']
         if "quant_config" in kwargs:
             del kwargs['quant_config']
+        if "config" in kwargs:
+            del kwargs['config']
 
         torch.cuda.empty_cache()
         default_kwargs = dict(
@@ -84,12 +102,24 @@ class Janus(BaseModel):
         else:
             self.vl_chat_processor.system_prompt = "You are a helpful assistant. Please answer truthfully and write out your thinking step by step to be sure you get the right answer."  # noqa: E501
 
+        
+        embedd_dir_path=f"{DEEPSEEK_MODEL_EMBEDDINS_DIR_PATH}/{dataset}"
+        if not os.path.exists(embedd_dir_path):
+            os.makedirs(embedd_dir_path)
+        
+        embedding_file_path = f"{embedd_dir_path}/embedding_{self.idx}.bin"
+        self.idx += 1
+
         conversation = self.prepare_inputs(message)
         from janus.utils.io import load_pil_images
         pil_images = load_pil_images(conversation)
         prepare_inputs = self.vl_chat_processor(conversations=conversation, images=pil_images, force_batchify=True)
         prepare_inputs = prepare_inputs.to(self.model.device, dtype=torch.bfloat16)
         inputs_embeds = self.model.prepare_inputs_embeds(**prepare_inputs)
+
+        embds = inputs_embeds
+        embds.cpu().flatten().float().detach().numpy().tofile(embedding_file_path)
+        print(f"Embeddings saved to {embedding_file_path} with {embds.shape} tokens")
 
         outputs = self.model.language_model.generate(
             inputs_embeds=inputs_embeds,
