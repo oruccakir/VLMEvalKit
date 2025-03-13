@@ -293,6 +293,7 @@ def main():
                 if model is None:
                     model = model_name  # which is only a name
 
+    
                 # Perform the Inference
                 if dataset.MODALITY == 'VIDEO':
                     model = infer_data_job_video(
@@ -321,6 +322,7 @@ def main():
                         verbose=args.verbose,
                         api_nproc=args.api_nproc,
                         ignore_failed=args.ignore)
+                    
 
                 # Set the judge kwargs first before evaluation or dumping
 

@@ -432,6 +432,8 @@ class LLaVA_Next(BaseModel):
         )
         inputs = self.processor(prompt, images, return_tensors="pt").to(
             self.device_map, torch.bfloat16
+        ) if len(images) > 0 else self.processor(prompt, return_tensors="pt").to(
+            self.device_map, torch.bfloat16
         )
 
         if self.save_embeddings:

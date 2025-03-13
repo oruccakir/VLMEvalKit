@@ -65,10 +65,15 @@ class Chameleon(BaseModel):
             elif x['type'] == 'image':
                 content += '<image>\n'
                 images.append(Image.open(x['value']))
+                print("immmm")
     
         inputs = self.processor(
             text=[content],
             images=images,
+            padding=True,
+            return_tensors='pt'
+        ).to(device=self.device_map, dtype=torch.bfloat16) if len(images) > 0 else self.processor(
+            text=[content],
             padding=True,
             return_tensors='pt'
         ).to(device=self.device_map, dtype=torch.bfloat16)

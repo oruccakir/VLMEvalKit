@@ -103,7 +103,8 @@ class ImageBaseDataset:
             data_path = local_path
 
         data = load(data_path)
-        self.categories = data["category"].tolist()
+        if 'category' in data:
+            self.categories = data["category"].unique()
         
         # this is just to see the distinct subset of the dataset
         if USE_UNIQUE_SUBSET:

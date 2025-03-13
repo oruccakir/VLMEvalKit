@@ -98,6 +98,10 @@ def infer_data(model, model_name, work_dir, dataset, out_file, verbose=False, ap
 
     model = supported_VLM[model_name]() if isinstance(model, str) else model
 
+    if hasattr(dataset, 'categories'):
+        model.categories = dataset.categories
+        print(model.categories)
+
     is_api = getattr(model, 'is_api', False)
     if is_api:
         lt, indices = len(data), list(data['index'])

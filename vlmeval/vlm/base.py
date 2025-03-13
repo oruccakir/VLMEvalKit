@@ -10,6 +10,7 @@ class BaseModel:
 
     def __init__(self):
         self.dump_image_func = None
+        self.categories = None
 
     def use_custom_prompt(self, dataset):
         """Whether to use custom prompt for the given dataset.
