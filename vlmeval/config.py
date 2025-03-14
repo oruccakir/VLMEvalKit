@@ -445,6 +445,7 @@ llama_series={
     'Llama-3.2-11B-Vision-Instruct': partial(llama_vision, model_path='meta-llama/Llama-3.2-11B-Vision-Instruct'),
     'LLaVA-CoT': partial(llama_vision, model_path='Xkev/Llama-3.2V-11B-cot'),
     'Llama-3.2-90B-Vision-Instruct': partial(llama_vision, model_path='meta-llama/Llama-3.2-90B-Vision-Instruct'),
+    "llama_8b": partial(llama_text, model_path='meta-llama/Meta-Llama-3-8B',config=config["llama_8b_config"]),
 }
 
 molmo_series={
