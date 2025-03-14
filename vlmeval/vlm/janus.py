@@ -98,7 +98,7 @@ class Janus(BaseModel):
         conversation.append(dict(role='Assistant', content=''))
         return conversation
 
-    def generate_inner(self, message, dataset=None):
+    def generate_inner(self, message, dataset=None,category=None):
         if dataset is None or not ('MMVet' in dataset):
             self.vl_chat_processor.system_prompt = ""
         else:

@@ -123,6 +123,7 @@ def infer_data(model, model_name, work_dir, dataset, out_file, verbose=False, ap
 
     for i in tqdm(range(lt)):
         idx = data.iloc[i]['index']
+        category=data.iloc[i]['category']
         if idx in res:
             continue
 
@@ -131,7 +132,7 @@ def infer_data(model, model_name, work_dir, dataset, out_file, verbose=False, ap
         else:
             struct = dataset.build_prompt(data.iloc[i])
 
-        response = model.generate(message=struct, dataset=dataset_name)
+        response = model.generate(message=struct, dataset=dataset_name,category=category)
         torch.cuda.empty_cache()
 
         if verbose:

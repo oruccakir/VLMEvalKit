@@ -413,7 +413,7 @@ class LLaVA_Next(BaseModel):
         message.append(dict(type="text", value=prompt))
         return message
 
-    def generate_inner(self, message, dataset=None):
+    def generate_inner(self, message, dataset=None,cateogry=None):
         content, images = [], []
         for msg in message:
             if msg["type"] == "text":

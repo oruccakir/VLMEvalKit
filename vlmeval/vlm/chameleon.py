@@ -57,7 +57,7 @@ class Chameleon(BaseModel):
 
         self.idx = 0
 
-    def generate_inner(self, message, dataset=None):
+    def generate_inner(self, message, dataset=None,category=None):
         content, images = '', []
         for x in message:
             if x['type'] == 'text':
@@ -65,7 +65,8 @@ class Chameleon(BaseModel):
             elif x['type'] == 'image':
                 content += '<image>\n'
                 images.append(Image.open(x['value']))
-                print("immmm")
+        
+        print(category)
     
         inputs = self.processor(
             text=[content],
