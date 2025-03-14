@@ -2,7 +2,7 @@ import pandas as pd
 from abc import abstractmethod
 from ..smp import *
 
-USE_UNIQUE_SUBSET = True
+USE_UNIQUE_SUBSET = False
 
 def img_root_map(dataset):
     if 'MM_NIAH' in dataset:

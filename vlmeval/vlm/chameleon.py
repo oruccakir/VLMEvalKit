@@ -42,6 +42,9 @@ class Chameleon(BaseModel):
         model = ChameleonForConditionalGeneration.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map=self.device_map, quantization_config=qunatization_config) if apply_quantization else ChameleonForConditionalGeneration.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map=self.device_map)
 
         self.save_embeddings = kwargs["config"]["save_embedding_flag"] if "config" in kwargs else False
+        self.save_embeddings_by_category = kwargs["config"]["save_embedding_by_category_flag"] if "config" in kwargs else False
+        self.prev_category = None
+        self.number_of_embeddings_per_ctg = kwargs["config"]["number_of_embeddings_for_each_category"] if "config" in kwargs else 1
 
         self.model = model
         self.processor = processor
@@ -66,8 +69,6 @@ class Chameleon(BaseModel):
                 content += '<image>\n'
                 images.append(Image.open(x['value']))
         
-        print(category)
-    
         inputs = self.processor(
             text=[content],
             images=images,
@@ -79,15 +80,27 @@ class Chameleon(BaseModel):
             return_tensors='pt'
         ).to(device=self.device_map, dtype=torch.bfloat16)
 
+        print(category)
+
         if self.save_embeddings:
             embedd_dir_path=f"{CHAMELEON_MODEL_EMBEDDINS_DIR_PATH}/{dataset}"
             if not os.path.exists(embedd_dir_path):
                 os.makedirs(embedd_dir_path)
             
-            embedding_file_path = f"{embedd_dir_path}/embedding_{self.idx}.bin"
-            self.idx += 1
+            if self.save_embeddings_by_category == False:
+                embedding_file_path = f"{embedd_dir_path}/embedding_{self.idx}.bin"
+                self.idx += 1
 
-            self.compute_and_save_embeddings(inputs,embedding_file_path)
+                self.compute_and_save_embeddings(inputs,embedding_file_path)
+            else:
+                if category != self.prev_category:
+                    embedding_file_path = f"{embedd_dir_path}/embedding_{category.lower().replace(" ", "_")}_{self.idx}.bin"
+                    self.idx = self.idx + 1
+                    self.compute_and_save_embeddings(inputs,embedding_file_path)
+                    if self.idx == self.number_of_embeddings_per_ctg:   
+                        self.prev_category = category
+                        self.idx = 0
+
 
         generate_ids = self.model.generate(**inputs, max_new_tokens=2048)
         input_token_len = inputs.input_ids.shape[1]

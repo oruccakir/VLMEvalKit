@@ -305,6 +305,9 @@ class LLaVA_Next(BaseModel):
                 )
 
                 self.save_embeddings = kwargs["config"]["save_embedding_flag"] if "config" in kwargs else False
+                self.save_embeddings_by_category = kwargs["config"]["save_embedding_by_category_flag"] if "config" in kwargs else False
+                self.prev_category = None
+                self.number_of_embeddings_per_ctg = kwargs["config"]["number_of_embeddings_for_each_category"] if "config" in kwargs else 1
 
                 if "apply_quantization" in kwargs:
                     del kwargs["apply_quantization"]
@@ -441,10 +444,19 @@ class LLaVA_Next(BaseModel):
             if not os.path.exists(embedd_dir_path):
                 os.makedirs(embedd_dir_path)
             
-            embedding_file_path = f"{embedd_dir_path}/embedding_{self.idx}.bin"
-            self.idx += 1
+            if self.save_embeddings_by_category == False:
+                embedding_file_path = f"{embedd_dir_path}/embedding_{self.idx}.bin"
+                self.idx += 1
 
-            self.compute_and_save_embeddings(inputs, embedding_file_path)
+                self.compute_and_save_embeddings(inputs,embedding_file_path)
+            else:
+                if cateogry != self.prev_category:
+                    embedding_file_path = f"{embedd_dir_path}/embedding_{cateogry.lower().replace(" ", "_")}_{self.idx}.bin"
+                    self.compute_and_save_embeddings(inputs,embedding_file_path)
+                    self.idx = self.idx + 1
+                    if self.idx == self.number_of_embeddings_per_ctg:   
+                        self.idx = 0
+                        self.prev_category = cateogry
 
         output = self.model.generate(**inputs, **self.kwargs)
         answer = self.processor.decode(output[0], skip_special_token=True)
