@@ -130,7 +130,7 @@ class Janus(BaseModel):
                 print(f"Embeddings saved to {embedding_file_path} with {embds.shape} tokens")
             else:
                 if category != self.prev_category:
-                    embedding_file_path = f"{embedd_dir_path}/embedding_{category.lower().replace(" ", "_")}_{self.idx}.bin"
+                    embedding_file_path = f"{embedd_dir_path}/embedding_{category.lower().replace(' ', '_')}_{self.idx}.bin"
                     embds = inputs_embeds
                     embds.cpu().flatten().float().detach().numpy().tofile(embedding_file_path)
                     self.idx = self.idx + 1

@@ -94,7 +94,7 @@ class Chameleon(BaseModel):
                 self.compute_and_save_embeddings(inputs,embedding_file_path)
             else:
                 if category != self.prev_category:
-                    embedding_file_path = f"{embedd_dir_path}/embedding_{category.lower().replace(" ", "_")}_{self.idx}.bin"
+                    embedding_file_path = f"{embedd_dir_path}/embedding_{category.lower().replace(' ', '_')}_{self.idx}.bin"
                     self.idx = self.idx + 1
                     self.compute_and_save_embeddings(inputs,embedding_file_path)
                     if self.idx == self.number_of_embeddings_per_ctg:   

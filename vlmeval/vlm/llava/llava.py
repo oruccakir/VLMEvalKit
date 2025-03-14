@@ -451,7 +451,7 @@ class LLaVA_Next(BaseModel):
                 self.compute_and_save_embeddings(inputs,embedding_file_path)
             else:
                 if cateogry != self.prev_category:
-                    embedding_file_path = f"{embedd_dir_path}/embedding_{cateogry.lower().replace(" ", "_")}_{self.idx}.bin"
+                    embedding_file_path = f"{embedd_dir_path}/embedding_{cateogry.lower().replace(' ', '_')}_{self.idx}.bin"
                     self.compute_and_save_embeddings(inputs,embedding_file_path)
                     self.idx = self.idx + 1
                     if self.idx == self.number_of_embeddings_per_ctg:   
