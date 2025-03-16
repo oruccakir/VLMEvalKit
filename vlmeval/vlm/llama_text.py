@@ -2,6 +2,9 @@ from transformers import BitsAndBytesConfig
 import torch
 from .base import BaseModel
 from transformers import AutoTokenizer, AutoModelForCausalLM
+
+from imports import LLAMA_MODEL_HF_DIR_PATH
+
 class llama_text(BaseModel):
     def __init__(self, model_path='meta-llama/Meta-Llama-3-8B', **kwargs):
         self.device_map = kwargs["config"]["device_map"] if "config" in kwargs else "cuda"
@@ -20,8 +23,8 @@ class llama_text(BaseModel):
                 bnb_8bit_compute_dtype=torch.float16
             )
 
-        processor = AutoTokenizer.from_pretrained(model_path)
-        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map=self.device_map, quantization_config=qunatization_config) if apply_quantization else AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map=self.device_map)
+        processor = AutoTokenizer.from_pretrained(model_path,cache_dir=LLAMA_MODEL_HF_DIR_PATH)
+        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map=self.device_map, quantization_config=qunatization_config,cache_dir=LLAMA_MODEL_HF_DIR_PATH) if apply_quantization else AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map=self.device_map,cache_dir=LLAMA_MODEL_HF_DIR_PATH)
 
         self.model = model
         self.processor = processor

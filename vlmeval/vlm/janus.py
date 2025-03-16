@@ -6,7 +6,7 @@ from .base import BaseModel
 from ..smp import *
 from ..dataset import DATASET_TYPE
 
-from imports import DEEPSEEK_MODEL_EMBEDDINS_DIR_PATH
+from imports import DEEPSEEK_MODEL_EMBEDDINS_DIR_PATH,DEEPSEEK_MODEL_HF_DIR_PATH
 
 class Janus(BaseModel):
 
@@ -43,10 +43,10 @@ class Janus(BaseModel):
                 bnb_8bit_compute_dtype=torch.float16
             )
 
-        self.vl_chat_processor = VLChatProcessor.from_pretrained(model_path)
+        self.vl_chat_processor = VLChatProcessor.from_pretrained(model_path,cache_dir=DEEPSEEK_MODEL_HF_DIR_PATH)
         self.tokenizer = self.vl_chat_processor.tokenizer
 
-        model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, device_map=self.device_map,torch_dtype=torch.bfloat16, quantization_config=qunatization_config) if apply_quantization else AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, device_map=self.device_map,torch_dtype=torch.bfloat16)
+        model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, device_map=self.device_map,torch_dtype=torch.bfloat16, quantization_config=qunatization_config,cache_dir=DEEPSEEK_MODEL_HF_DIR_PATH) if apply_quantization else AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, device_map=self.device_map,torch_dtype=torch.bfloat16,cache_dir=DEEPSEEK_MODEL_HF_DIR_PATH)
         self.model = model
 
         self.save_embeddings = kwargs["config"]["save_embedding_flag"] if "config" in kwargs else False

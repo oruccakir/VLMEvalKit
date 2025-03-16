@@ -10,7 +10,7 @@ import copy
 import requests
 from transformers import BitsAndBytesConfig
 
-from imports import LLAVA_MODEL_EMDEDINGS_DIR_PATH
+from imports import LLAVA_MODEL_EMDEDINGS_DIR_PATH,LLAVA_MODEL_HF_DIR_PATH
 
 class LLaVA(BaseModel):
 
@@ -251,7 +251,7 @@ class LLaVA_Next(BaseModel):
         elif "interleave" in model_path.lower():
             self.processor = AutoProcessor.from_pretrained(self.model_path)
         else:
-            self.processor = LlavaNextProcessor.from_pretrained(self.model_path)
+            self.processor = LlavaNextProcessor.from_pretrained(self.model_path,cache_dir=LLAVA_MODEL_HF_DIR_PATH)
         flash_attn_flag = False
         try:
             import flash_attn
@@ -299,9 +299,9 @@ class LLaVA_Next(BaseModel):
                     )
 
                 model = LlavaNextForConditionalGeneration.from_pretrained(
-                    self.model_path, torch_dtype=torch.bfloat16, device_map=self.device_map, quantization_config=qunatization_config
+                    self.model_path, torch_dtype=torch.bfloat16, device_map=self.device_map, quantization_config=qunatization_config,cache_dir=LLAVA_MODEL_HF_DIR_PATH
                 ) if apply_quantization else LlavaNextForConditionalGeneration.from_pretrained(
-                    self.model_path, torch_dtype=torch.bfloat16, device_map=self.device_map
+                    self.model_path, torch_dtype=torch.bfloat16, device_map=self.device_map,cache_dir=LLAVA_MODEL_HF_DIR_PATH
                 )
 
                 self.save_embeddings = kwargs["config"]["save_embedding_flag"] if "config" in kwargs else False

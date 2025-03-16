@@ -6,7 +6,7 @@ from PIL import Image
 import torch
 
 from transformers import BitsAndBytesConfig
-from imports import CHAMELEON_MODEL_EMBEDDINS_DIR_PATH
+from imports import CHAMELEON_MODEL_EMBEDDINS_DIR_PATH, CHAMELEON_MODEL_HF_DIR_PATH
 
 class Chameleon(BaseModel):
 
@@ -38,8 +38,8 @@ class Chameleon(BaseModel):
                 bnb_8bit_compute_dtype=torch.float16
             )
 
-        processor = ChameleonProcessor.from_pretrained(model_path)
-        model = ChameleonForConditionalGeneration.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map=self.device_map, quantization_config=qunatization_config) if apply_quantization else ChameleonForConditionalGeneration.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map=self.device_map)
+        processor = ChameleonProcessor.from_pretrained(model_path,cache_dir=CHAMELEON_MODEL_HF_DIR_PATH)
+        model = ChameleonForConditionalGeneration.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map=self.device_map, quantization_config=qunatization_config,cache_dir=CHAMELEON_MODEL_HF_DIR_PATH) if apply_quantization else ChameleonForConditionalGeneration.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map=self.device_map,cache_dir=CHAMELEON_MODEL_HF_DIR_PATH)
 
         self.save_embeddings = kwargs["config"]["save_embedding_flag"] if "config" in kwargs else False
         self.save_embeddings_by_category = kwargs["config"]["save_embedding_by_category_flag"] if "config" in kwargs else False
