@@ -23,24 +23,11 @@ class llama_text(BaseModel):
         processor = AutoTokenizer.from_pretrained(model_path)
         model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map=self.device_map, quantization_config=qunatization_config) if apply_quantization else AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map=self.device_map)
 
-        self.save_embeddings = kwargs["config"]["save_embedding_flag"] if "config" in kwargs else False
-        self.save_embeddings_by_category = kwargs["config"]["save_embedding_by_category_flag"] if "config" in kwargs else False
-        self.prev_category = None
-        self.number_of_embeddings_per_ctg = kwargs["config"]["number_of_embeddings_for_each_category"] if "config" in kwargs else 1
-
         self.model = model
         self.processor = processor
 
-        if "apply_quantization" in kwargs:
-            del kwargs["apply_quantization"]
-        if "device_map" in kwargs:
-            del kwargs['device_map']
-        if "quant_config" in kwargs:
-            del kwargs['quant_config']
         if "config" in kwargs:
             del kwargs['config']
-
-        self.idx = 0
 
     def generate_inner(self, message, dataset=None,category=None):
         content = ''
@@ -58,7 +45,3 @@ class llama_text(BaseModel):
         )
 
         return self.processor.decode(outputs[0], skip_special_tokens=True)
-        
-
-    def compute_and_save_embeddings(self, inputs, embedding_file_path):
-        pass
