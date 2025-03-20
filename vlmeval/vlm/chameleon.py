@@ -5,6 +5,8 @@ from ..smp import *
 from PIL import Image
 import torch
 
+from ..dataset import DATASET_TYPE, DATASET_MODALITY
+
 from transformers import BitsAndBytesConfig
 from imports import CHAMELEON_MODEL_EMBEDDINS_DIR_PATH, CHAMELEON_MODEL_HF_DIR_PATH
 
@@ -105,6 +107,42 @@ class Chameleon(BaseModel):
         )[0]
 
         return text
+
+
+    def use_custom_prompt(self, dataset):
+        assert dataset is not None
+        if DATASET_TYPE(dataset) == "MCQ":
+            return True
+        return False
+
+    def build_prompt(self, line, dataset=None):
+        assert dataset is None or isinstance(dataset, str)
+        assert self.use_custom_prompt(dataset)
+        tgt_path = self.dump_image(line, dataset)
+        question = line['question']
+        if DATASET_TYPE(dataset) == 'MCQ':
+            options = {
+                cand: line[cand]
+                for cand in string.ascii_uppercase
+                if cand in line and not pd.isna(line[cand])
+            }
+            options_prompt = ''
+            for key, item in options.items():
+                options_prompt += f'{key}. {item}\n'
+
+            hint = line['hint'] if ('hint' in line and not pd.isna(line['hint'])) else None
+            prompt = f'\nHint: {hint}\n' if hint is not None else '\n'
+            prompt += f'{question}\n'
+            prompt += (
+                f"{options_prompt}\nAnswer with the option's letter from the given choices directly."
+                if len(options) else 'Answer the question directly. '
+            )
+        else:
+            raise NotImplementedError
+
+        message = [dict(type='image', value=s) for s in tgt_path]
+        message.extend([dict(type='text', value=prompt)])
+        return message
     
     def compute_and_save_embeddings(self, inputs, embedding_file_path):
         self.model.model.save_embedding_flag = True
