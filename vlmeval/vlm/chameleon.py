@@ -64,7 +64,7 @@ class Chameleon(BaseModel):
             elif x['type'] == 'image':
                 content += '<image>\n'
                 images.append(Image.open(x['value']))
-        
+    
         inputs = self.processor(
             text=[content],
             images=images,
@@ -76,7 +76,8 @@ class Chameleon(BaseModel):
             return_tensors='pt'
         ).to(device=self.device_map, dtype=torch.bfloat16)
 
-        print(category)
+        #print("Builded prompt")
+        #print(content)
 
         if self.save_embeddings:
             embedd_dir_path=f"{CHAMELEON_MODEL_EMBEDDINS_DIR_PATH}/{dataset}"
@@ -106,6 +107,8 @@ class Chameleon(BaseModel):
             clean_up_tokenization_spaces=False
         )[0]
 
+        #print("Generated text")
+
         return text
 
 
@@ -134,8 +137,8 @@ class Chameleon(BaseModel):
             prompt = f'\nHint: {hint}\n' if hint is not None else '\n'
             prompt += f'{question}\n'
             prompt += (
-                f"{options_prompt}\nAnswer with the option's letter from the given choices directly."
-                if len(options) else 'Answer the question directly. '
+                f"{options_prompt}\nAnswer with the option's letter from the given choices directly.Always give the answer in the form of just single letter."
+                if len(options) else 'Answer the question directly. just the letter.Always give the answer in the form of just single letter.'
             )
         else:
             raise NotImplementedError
