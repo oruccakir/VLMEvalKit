@@ -66,18 +66,15 @@ class Chameleon(BaseModel):
                 images.append(Image.open(x['value']))
     
         inputs = self.processor(
-            text=[content],
+            text=[content, "please provide the answer in the form of a single letter if it is Multiple Choice Question."],
             images=images,
             padding=True,
             return_tensors='pt'
         ).to(device=self.device_map, dtype=torch.bfloat16) if len(images) > 0 else self.processor(
-            text=[content],
+            text=[content, "please provide the answer in the form of a single letter if it is Multiple Choice Question."],
             padding=True,
             return_tensors='pt'
         ).to(device=self.device_map, dtype=torch.bfloat16)
-
-        #print("Builded prompt")
-        #print(content)
 
         if self.save_embeddings:
             embedd_dir_path=f"{CHAMELEON_MODEL_EMBEDDINS_DIR_PATH}/{dataset}"
@@ -106,8 +103,6 @@ class Chameleon(BaseModel):
             skip_special_tokens=True,
             clean_up_tokenization_spaces=False
         )[0]
-
-        #print("Generated text")
 
         return text
 
