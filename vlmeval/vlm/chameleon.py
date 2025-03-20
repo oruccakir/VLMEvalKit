@@ -49,12 +49,6 @@ class Chameleon(BaseModel):
         self.model = model
         self.processor = processor
 
-        if "apply_quantization" in kwargs:
-            del kwargs["apply_quantization"]
-        if "device_map" in kwargs:
-            del kwargs['device_map']
-        if "quant_config" in kwargs:
-            del kwargs['quant_config']
         if "config" in kwargs:
             del kwargs['config']
 

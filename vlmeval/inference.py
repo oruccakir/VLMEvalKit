@@ -100,7 +100,6 @@ def infer_data(model, model_name, work_dir, dataset, out_file, verbose=False, ap
 
     if hasattr(dataset, 'categories'):
         model.categories = dataset.categories
-        print(model.categories)
 
     is_api = getattr(model, 'is_api', False)
     if is_api:

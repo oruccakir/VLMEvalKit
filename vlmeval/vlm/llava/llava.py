@@ -309,12 +309,6 @@ class LLaVA_Next(BaseModel):
                 self.prev_category = None
                 self.number_of_embeddings_per_ctg = kwargs["config"]["number_of_embeddings_for_each_category"] if "config" in kwargs else 1
 
-                if "apply_quantization" in kwargs:
-                    del kwargs["apply_quantization"]
-                if "device_map" in kwargs:
-                    del kwargs['device_map']
-                if "quant_config" in kwargs:
-                    del kwargs['quant_config']
                 if "config" in kwargs:
                     del kwargs['config']
 
