@@ -47,6 +47,7 @@ class Chameleon(BaseModel):
         self.save_embeddings_by_category = kwargs["config"]["save_embedding_by_category_flag"] if "config" in kwargs else False
         self.prev_category = None
         self.number_of_embeddings_per_ctg = kwargs["config"]["number_of_embeddings_for_each_category"] if "config" in kwargs else 1
+        self.get_weight_distribution = kwargs["config"]["get_weight_distribution"] if "config" in kwargs else False
 
         self.model = model
         self.processor = processor
@@ -76,6 +77,7 @@ class Chameleon(BaseModel):
             return_tensors='pt'
         ).to(device=self.device_map, dtype=torch.bfloat16)
 
+
         if self.save_embeddings:
             embedd_dir_path=f"{CHAMELEON_MODEL_EMBEDDINS_DIR_PATH}/{dataset}"
             if not os.path.exists(embedd_dir_path):
@@ -87,6 +89,9 @@ class Chameleon(BaseModel):
 
                 self.compute_and_save_embeddings(inputs,embedding_file_path)
             else:
+
+                input_activation_dir_path = f"{embedd_dir_path}/embedding_{category.lower().replace(' ', '_')}_{self.idx}_activation"
+
                 if category != self.prev_category:
                     embedding_file_path = f"{embedd_dir_path}/embedding_{category.lower().replace(' ', '_')}_{self.idx}.bin"
                     self.idx = self.idx + 1
@@ -94,6 +99,9 @@ class Chameleon(BaseModel):
                     if self.idx == self.number_of_embeddings_per_ctg:   
                         self.prev_category = category
                         self.idx = 0
+                    
+                    if self.get_weight_distribution and self.idx == 1:
+                        self.model.model.get_weights_distribution_flag = True
 
 
         generate_ids = self.model.generate(**inputs, max_new_tokens=2048)
@@ -103,6 +111,9 @@ class Chameleon(BaseModel):
             skip_special_tokens=True,
             clean_up_tokenization_spaces=False
         )[0]
+
+        if self.get_weight_distribution and self.idx == 1:
+            self.model.model.save_all_input_activations(input_activation_dir_path)
 
         return text
 

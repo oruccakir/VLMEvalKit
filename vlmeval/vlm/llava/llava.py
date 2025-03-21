@@ -308,6 +308,7 @@ class LLaVA_Next(BaseModel):
                 self.save_embeddings_by_category = kwargs["config"]["save_embedding_by_category_flag"] if "config" in kwargs else False
                 self.prev_category = None
                 self.number_of_embeddings_per_ctg = kwargs["config"]["number_of_embeddings_for_each_category"] if "config" in kwargs else 1
+                self.get_weight_distribution = kwargs["config"]["get_weight_distribution"] if "config" in kwargs else False
 
                 if "config" in kwargs:
                     del kwargs['config']
@@ -410,7 +411,7 @@ class LLaVA_Next(BaseModel):
         message.append(dict(type="text", value=prompt))
         return message
 
-    def generate_inner(self, message, dataset=None,cateogry=None):
+    def generate_inner(self, message, dataset=None,category=None):
         content, images = [], []
         for msg in message:
             if msg["type"] == "text":
@@ -444,17 +445,28 @@ class LLaVA_Next(BaseModel):
 
                 self.compute_and_save_embeddings(inputs,embedding_file_path)
             else:
-                if cateogry != self.prev_category:
-                    embedding_file_path = f"{embedd_dir_path}/embedding_{cateogry.lower().replace(' ', '_')}_{self.idx}.bin"
+
+                input_activation_dir_path = f"{embedd_dir_path}/embedding_{category.lower().replace(' ', '_')}_{self.idx}_activation"
+
+                if category != self.prev_category:
+                    embedding_file_path = f"{embedd_dir_path}/embedding_{category.lower().replace(' ', '_')}_{self.idx}.bin"
                     self.compute_and_save_embeddings(inputs,embedding_file_path)
                     self.idx = self.idx + 1
                     if self.idx == self.number_of_embeddings_per_ctg:   
                         self.idx = 0
-                        self.prev_category = cateogry
+                        self.prev_category = category
+
+                    if self.get_weight_distribution and self.idx == 1:
+                        self.model.language_model.model.get_weights_distribution_flag = True
 
         output = self.model.generate(**inputs, **self.kwargs)
         answer = self.processor.decode(output[0], skip_special_token=True)
         answer = self.output_process(answer)
+
+
+        if self.get_weight_distribution and self.idx == 1:
+            self.model.language_model.model.save_all_input_activations(input_activation_dir_path)
+
         return answer
     
     def compute_and_save_embeddings(self, inputs, embedding_file_path):
