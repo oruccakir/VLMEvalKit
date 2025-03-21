@@ -446,7 +446,7 @@ class LLaVA_Next(BaseModel):
                 self.compute_and_save_embeddings(inputs,embedding_file_path)
             else:
 
-                input_activation_dir_path = f"{embedd_dir_path}/embedding_{category.lower().replace(' ', '_')}_{self.idx}_activation"
+                input_activation_dir_path = None                
 
                 if category != self.prev_category:
                     embedding_file_path = f"{embedd_dir_path}/embedding_{category.lower().replace(' ', '_')}_{self.idx}.bin"
@@ -457,6 +457,7 @@ class LLaVA_Next(BaseModel):
                         self.prev_category = category
 
                     if self.get_weight_distribution and self.idx == 1:
+                        input_activation_dir_path = f"{embedd_dir_path}/embedding_{category.lower().replace(' ', '_')}_{0}_activation"
                         self.model.language_model.model.get_weights_distribution_flag = True
 
         output = self.model.generate(**inputs, **self.kwargs)
@@ -464,8 +465,9 @@ class LLaVA_Next(BaseModel):
         answer = self.output_process(answer)
 
 
-        if self.get_weight_distribution and self.idx == 1:
+        if self.get_weight_distribution and input_activation_dir_path is not None:
             self.model.language_model.model.save_all_input_activations(input_activation_dir_path)
+            input_activation_dir_path = None
 
         return answer
     

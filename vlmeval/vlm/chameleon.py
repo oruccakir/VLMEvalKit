@@ -90,7 +90,7 @@ class Chameleon(BaseModel):
                 self.compute_and_save_embeddings(inputs,embedding_file_path)
             else:
 
-                input_activation_dir_path = f"{embedd_dir_path}/embedding_{category.lower().replace(' ', '_')}_{self.idx}_activation"
+                input_activation_dir_path = None
 
                 if category != self.prev_category:
                     embedding_file_path = f"{embedd_dir_path}/embedding_{category.lower().replace(' ', '_')}_{self.idx}.bin"
@@ -101,6 +101,7 @@ class Chameleon(BaseModel):
                         self.idx = 0
                     
                     if self.get_weight_distribution and self.idx == 1:
+                        input_activation_dir_path = f"{embedd_dir_path}/embedding_{category.lower().replace(' ', '_')}_{0}_activation"
                         self.model.model.get_weights_distribution_flag = True
 
 
@@ -112,8 +113,9 @@ class Chameleon(BaseModel):
             clean_up_tokenization_spaces=False
         )[0]
 
-        if self.get_weight_distribution and self.idx == 1:
+        if self.get_weight_distribution and input_activation_dir_path is not None:
             self.model.model.save_all_input_activations(input_activation_dir_path)
+            input_activation_dir_path = None
 
         return text
 
