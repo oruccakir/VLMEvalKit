@@ -45,9 +45,9 @@ class Chameleon(BaseModel):
 
         self.save_embeddings = kwargs["config"]["save_embedding_flag"] if "config" in kwargs else False
         self.save_embeddings_by_category = kwargs["config"]["save_embedding_by_category_flag"] if "config" in kwargs else False
-        self.prev_category = None
         self.number_of_embeddings_per_ctg = kwargs["config"]["number_of_embeddings_for_each_category"] if "config" in kwargs else 1
         self.get_weight_distribution = kwargs["config"]["get_weight_distribution"] if "config" in kwargs else False
+        self.dataset_category_map = {}
 
         self.model = model
         self.processor = processor
@@ -67,12 +67,12 @@ class Chameleon(BaseModel):
                 images.append(Image.open(x['value']))
     
         inputs = self.processor(
-            text=[content, "please provide the answer in the form of a single letter if it is Multiple Choice Question."],
+            text=[content],
             images=images,
             padding=True,
             return_tensors='pt'
         ).to(device=self.device_map, dtype=torch.bfloat16) if len(images) > 0 else self.processor(
-            text=[content, "please provide the answer in the form of a single letter if it is Multiple Choice Question."],
+            text=[content],
             padding=True,
             return_tensors='pt'
         ).to(device=self.device_map, dtype=torch.bfloat16)
@@ -91,18 +91,17 @@ class Chameleon(BaseModel):
             else:
 
                 input_activation_dir_path = None
+                if category not in self.dataset_category_map or self.dataset_category_map[category] < self.number_of_embeddings_per_ctg:
+                    if category not in self.dataset_category_map:
+                        self.dataset_category_map[category] = 0
+                        if self.get_weight_distribution:
+                            print("Saving input activations for the first input of each category")
+                            input_activation_dir_path = f"{embedd_dir_path}/embedding_{category.lower().replace(' ', '_')}_{0}_activation"
+                            self.model.model.get_weights_distribution_flag = True
 
-                if category != self.prev_category:
-                    embedding_file_path = f"{embedd_dir_path}/embedding_{category.lower().replace(' ', '_')}_{self.idx}.bin"
-                    self.idx = self.idx + 1
+                    embedding_file_path = f"{embedd_dir_path}/embedding_{category.lower().replace(' ', '_')}_{self.dataset_category_map[category]}.bin"
+                    self.dataset_category_map[category] = self.dataset_category_map[category] + 1
                     self.compute_and_save_embeddings(inputs,embedding_file_path)
-                    if self.idx == self.number_of_embeddings_per_ctg:   
-                        self.prev_category = category
-                        self.idx = 0
-                    
-                    if self.get_weight_distribution and self.idx == 1:
-                        input_activation_dir_path = f"{embedd_dir_path}/embedding_{category.lower().replace(' ', '_')}_{0}_activation"
-                        self.model.model.get_weights_distribution_flag = True
 
 
         generate_ids = self.model.generate(**inputs, max_new_tokens=2048)
