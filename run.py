@@ -248,9 +248,9 @@ def main():
                     result_file_base = result_file_base.replace('.xlsx', '.tsv')
 
                 result_file = osp.join(pred_root, result_file_base)
-
+                print(result_file, prev_pred_roots)
                 # Reuse the previous prediction file if exists
-                if rank == 0 and len(prev_pred_roots):
+                if False and rank == 0 and len(prev_pred_roots):
                     prev_result_files = []
                     prev_pkl_file_list = []
                     for root in prev_pred_roots[::-1]:
@@ -314,6 +314,7 @@ def main():
                         api_nproc=args.api_nproc,
                         ignore_failed=args.ignore)
                 else:
+                    print("Predicting...")
                     model = infer_data_job(
                         model,
                         work_dir=pred_root,

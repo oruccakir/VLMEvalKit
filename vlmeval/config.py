@@ -335,6 +335,7 @@ deepseekvl2_series = {
 janus_series = {
     'Janus-1.3B': partial(Janus, model_path='deepseek-ai/Janus-1.3B'),
     #'Janus-Pro-7B': partial(Janus, model_path='deepseek-ai/Janus-Pro-7B',config=config["deepseek_janus_pro_7b_config"]),
+    'deepseek_janus_pro_1b': partial(Janus, model_path='deepseek-ai/Janus-Pro-1B',config=config["deepseek_janus_pro_1b_config"]),
     'deepseek_janus_pro_7b': partial(Janus, model_path='deepseek-ai/Janus-Pro-7B',config=config["deepseek_janus_pro_7b_config"]),
 }
 

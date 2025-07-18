@@ -47,6 +47,8 @@ from ..smp import *
 
 from .mix_modal import MixModalDataSet
 
+from .custom_dataset import CustomDataset
+
 
 class ConcatDataset(ImageBaseDataset):
     # This dataset takes multiple dataset names as input and aggregate them into a single dataset.
@@ -164,9 +166,11 @@ CUSTOM_DATASET = [
     CustomMCQDataset, CustomVQADataset, CustomTextMCQDataset
 ]
 
+CUSTOM_DATASET_2 = [CustomDataset]
+
 DATASET_COLLECTION = [ConcatDataset, ConcatVideoDataset]
 
-DATASET_CLASSES = IMAGE_DATASET + VIDEO_DATASET + TEXT_DATASET + CUSTOM_DATASET + DATASET_COLLECTION + MIX_MODAL_DATA_SET
+DATASET_CLASSES = IMAGE_DATASET + VIDEO_DATASET + TEXT_DATASET + CUSTOM_DATASET + DATASET_COLLECTION + MIX_MODAL_DATA_SET + CUSTOM_DATASET_2
 SUPPORTED_DATASETS = []
 for DATASET_CLS in DATASET_CLASSES:
     SUPPORTED_DATASETS.extend(DATASET_CLS.supported_datasets())

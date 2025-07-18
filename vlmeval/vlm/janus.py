@@ -6,7 +6,7 @@ from .base import BaseModel
 from ..smp import *
 from ..dataset import DATASET_TYPE
 
-from imports import DEEPSEEK_MODEL_EMBEDDINS_DIR_PATH,DEEPSEEK_MODEL_HF_DIR_PATH
+from imports import DEEPSEEK_1B_MODEL_EMBEDDINS_DIR_PATH,DEEPSEEK_7B_MODEL_EMBEDDINS_DIR_PATH,DEEPSEEK_MODEL_HF_DIR_PATH
 
 class Janus(BaseModel):
 
@@ -47,6 +47,9 @@ class Janus(BaseModel):
         self.tokenizer = self.vl_chat_processor.tokenizer
 
         model = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, device_map=self.device_map,torch_dtype=torch.bfloat16, quantization_config=qunatization_config,cache_dir=DEEPSEEK_MODEL_HF_DIR_PATH) if apply_quantization else AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True, device_map=self.device_map,torch_dtype=torch.bfloat16,cache_dir=DEEPSEEK_MODEL_HF_DIR_PATH)
+        #class FakeModel:
+        #    device = "cuda"
+        #model = FakeModel()
         self.model = model
 
         self.save_embeddings = kwargs["config"]["save_embedding_flag"] if "config" in kwargs else False
@@ -102,23 +105,36 @@ class Janus(BaseModel):
         else:
             self.vl_chat_processor.system_prompt = "You are a helpful assistant. Please answer truthfully and write out your thinking step by step to be sure you get the right answer."  # noqa: E501
 
+        #print(message)
         conversation = self.prepare_inputs(message)
+        #print(conversation)
         from janus.utils.io import load_pil_images
         pil_images = load_pil_images(conversation)
         prepare_inputs = self.vl_chat_processor(conversations=conversation, images=pil_images, force_batchify=True)
         prepare_inputs = prepare_inputs.to(self.model.device, dtype=torch.bfloat16)
         inputs_embeds = self.model.prepare_inputs_embeds(**prepare_inputs)
 
-
+        print("Save embeddings?",self.save_embeddings)
         if self.save_embeddings:
-            embedd_dir_path=f"{DEEPSEEK_MODEL_EMBEDDINS_DIR_PATH}/{dataset}"
+            embedd_dir_path=""
+            if os.getenv("MODEL_ID") != "deepseek_janus_pro_1b":
+                embedd_dir_path=f"{DEEPSEEK_7B_MODEL_EMBEDDINS_DIR_PATH}/{dataset}"
+            else:
+                embedd_dir_path=f"{DEEPSEEK_1B_MODEL_EMBEDDINS_DIR_PATH}/{dataset}"
+            if "EMBEDDING_DIR_PATH" in os.environ:
+                embedd_dir_path=os.environ["EMBEDDING_DIR_PATH"]
             if not os.path.exists(embedd_dir_path):
                 os.makedirs(embedd_dir_path)
 
-            
+            self.save_embeddings_by_category = False
+            print("Warning: Saving embeddings by category manually deactivated in line 124 of VLMEvalKit/vlmeval/vlm/janus.py")
+            print("Save embeddings by category?",self.save_embeddings_by_category)
             if self.save_embeddings_by_category == False:
-                embedding_file_path = f"{embedd_dir_path}/embedding_{self.idx}.bin"
-                self.idx += 1
+                if "EMBEDDING_FILE" not in os.environ:
+                    embedding_file_path = f"{embedd_dir_path}/embedding_{self.idx}.bin"
+                    self.idx += 1
+                else:
+                    embedding_file_path = os.environ["EMBEDDING_FILE"]
 
                 embds = inputs_embeds
                 embds.cpu().flatten().float().detach().numpy().tofile(embedding_file_path)
@@ -140,15 +156,20 @@ class Janus(BaseModel):
                     embds.cpu().flatten().float().detach().numpy().tofile(embedding_file_path)
                     print(f"Embeddings saved to {embedding_file_path} with {embds.shape[1]} tokens")
 
-
-        outputs = self.model.language_model.generate(
-            inputs_embeds=inputs_embeds,
-            attention_mask=prepare_inputs.attention_mask,
-            pad_token_id=self.tokenizer.eos_token_id,
-            bos_token_id=self.tokenizer.bos_token_id,
-            eos_token_id=self.tokenizer.eos_token_id,
-            **self.kwargs)
-        answer = self.tokenizer.decode(outputs[0].cpu().tolist(), skip_special_tokens=True)
+        
+        print("Text prediction disabled in janus when generating embeddings, save_embeddings =", self.save_embeddings)
+        outputs = ""
+        answer = ""
+        print(self.save_embeddings)
+        if not self.save_embeddings:
+            outputs = self.model.language_model.generate(
+                inputs_embeds=inputs_embeds,
+                attention_mask=prepare_inputs.attention_mask,
+                pad_token_id=self.tokenizer.eos_token_id,
+                bos_token_id=self.tokenizer.bos_token_id,
+                eos_token_id=self.tokenizer.eos_token_id,
+                **self.kwargs)
+            answer = self.tokenizer.decode(outputs[0].cpu().tolist(), skip_special_tokens=True)
 
                 
         if self.get_weight_distribution and  input_activation_dir_path is not None:
