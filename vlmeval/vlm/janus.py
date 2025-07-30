@@ -121,8 +121,10 @@ class Janus(BaseModel):
                 embedd_dir_path=f"{DEEPSEEK_7B_MODEL_EMBEDDINS_DIR_PATH}/{dataset}"
             else:
                 embedd_dir_path=f"{DEEPSEEK_1B_MODEL_EMBEDDINS_DIR_PATH}/{dataset}"
+            print("Embed dir path:", embedd_dir_path)
             if "EMBEDDING_DIR_PATH" in os.environ:
-                embedd_dir_path=os.environ["EMBEDDING_DIR_PATH"]
+                embedd_dir_path=f'{os.environ["EMBEDDING_DIR_PATH"]}/{dataset}'
+                print("Using embedding dir path from enviorment.")
             if not os.path.exists(embedd_dir_path):
                 os.makedirs(embedd_dir_path)
 
@@ -135,6 +137,7 @@ class Janus(BaseModel):
                     self.idx += 1
                 else:
                     embedding_file_path = os.environ["EMBEDDING_FILE"]
+                    print("Using embedding file from enviorment.")
 
                 embds = inputs_embeds
                 embds.cpu().flatten().float().detach().numpy().tofile(embedding_file_path)

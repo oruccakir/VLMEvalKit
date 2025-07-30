@@ -77,7 +77,7 @@ class Chameleon(BaseModel):
             return_tensors='pt'
         ).to(device=self.device_map, dtype=torch.bfloat16)
 
-
+        self.save_embeddings_by_category = False
         if self.save_embeddings:
             embedd_dir_path=f"{CHAMELEON_MODEL_EMBEDDINS_DIR_PATH}/{dataset}"
             if not os.path.exists(embedd_dir_path):
@@ -88,6 +88,7 @@ class Chameleon(BaseModel):
                 self.idx += 1
 
                 self.compute_and_save_embeddings(inputs,embedding_file_path)
+                return
             else:
 
                 input_activation_dir_path = None
@@ -102,7 +103,7 @@ class Chameleon(BaseModel):
                     embedding_file_path = f"{embedd_dir_path}/embedding_{category.lower().replace(' ', '_')}_{self.dataset_category_map[category]}.bin"
                     self.dataset_category_map[category] = self.dataset_category_map[category] + 1
                     self.compute_and_save_embeddings(inputs,embedding_file_path)
-
+                    return
 
         generate_ids = self.model.generate(**inputs, max_new_tokens=2048)
         input_token_len = inputs.input_ids.shape[1]

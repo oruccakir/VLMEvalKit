@@ -28,7 +28,7 @@ class CustomDataset:
         self.img_root = osp.join(ROOT, 'images', self.dataset_name)
         if not os.path.exists(self.img_root):
             os.makedirs(self.img_root)
-        file = f"{os.environ['LUMINA']}/Datasets/" + self.name
+        file = f"{os.environ["LUMINA"]}/Datasets/" + self.name
         self.data = pd.DataFrame(load_from_disk(file))
         self.n = len(self.data["question"])
         self.data["index"] = [i for i in range(self.n)]

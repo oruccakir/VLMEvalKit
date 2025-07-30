@@ -312,7 +312,6 @@ class LLaVA_Next(BaseModel):
 
                 if "config" in kwargs:
                     del kwargs['config']
-
         #model = model.eval()
         self.model = model
 
@@ -434,6 +433,7 @@ class LLaVA_Next(BaseModel):
             self.device_map, torch.bfloat16
         )
 
+        self.save_embeddings_by_category = False
         if self.save_embeddings:
             embedd_dir_path=f"{LLAVA_MODEL_EMDEDINGS_DIR_PATH}/{dataset}"
             if not os.path.exists(embedd_dir_path):
@@ -459,7 +459,8 @@ class LLaVA_Next(BaseModel):
                     self.dataset_category_map[category] = self.dataset_category_map[category] + 1
                     self.compute_and_save_embeddings(inputs,embedding_file_path)            
 
-                        
+        if self.save_embeddings:
+            return              
 
         output = self.model.generate(**inputs, **self.kwargs)
         answer = self.processor.decode(output[0], skip_special_token=True)
