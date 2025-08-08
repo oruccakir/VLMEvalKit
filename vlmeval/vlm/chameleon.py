@@ -77,6 +77,8 @@ class Chameleon(BaseModel):
             return_tensors='pt'
         ).to(device=self.device_map, dtype=torch.bfloat16)
 
+        self.model.generation_config.max_new_tokens =10000
+
         self.save_embeddings_by_category = False
         if self.save_embeddings:
             embedd_dir_path=f"{CHAMELEON_MODEL_EMBEDDINS_DIR_PATH}/{dataset}"
@@ -105,7 +107,7 @@ class Chameleon(BaseModel):
                     self.compute_and_save_embeddings(inputs,embedding_file_path)
                     return
 
-        generate_ids = self.model.generate(**inputs, max_new_tokens=2048)
+        generate_ids = self.model.generate(**inputs, max_new_tokens=4096)
         input_token_len = inputs.input_ids.shape[1]
         text = self.processor.batch_decode(
             generate_ids[:, input_token_len:],
@@ -158,8 +160,8 @@ class Chameleon(BaseModel):
     def compute_and_save_embeddings(self, inputs, embedding_file_path):
         self.model.model.save_embedding_flag = True
         self.model.model.embedding_file_path = embedding_file_path
-        try :
-            self.model.generate(**inputs)
-        except Exception as e:
-            pass
+        #try :
+        self.model.generate(**inputs)
+        #except Exception as e:
+        #    pass
         self.model.model.save_embedding_flag = False

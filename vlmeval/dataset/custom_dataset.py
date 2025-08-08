@@ -65,7 +65,7 @@ Question: {el["question"]}"""
             if len(images):
                 add_placeholder = ""
                 holders = []
-                ptr = 0
+                """ptr = 0
                 while True:
                     ptr = question.find("<image_", ptr)
                     if ptr == -1: break
@@ -75,11 +75,11 @@ Question: {el["question"]}"""
                         question = question.replace(f"<image_{num}>", "<image_placeholder>")
                     except:
                         pass
-                    ptr += 1
+                    ptr += 1"""
                 for i in range(len(images)-len(holders)):
                     add_placeholder += "<image_placeholder>"
                 assert len(images)==len(holders) or len(holders)==0
-                question = f"You are a helpful asistant that can understand the images provided by the User and answer the questions asked.\n{question}\n{add_placeholder}"
+                question = f"You are a helpful asistant that can understand the images provided by the User and answer the questions asked.\nImages:{add_placeholder}\n{question}\n"
                 #print(question)
                 idx = 0
                 if len(holders) == 0:
@@ -105,7 +105,6 @@ Question: {el["question"]}"""
             file = os.environ["QUERY_FILE"]
             with open(file, "r") as f:
                 res = [dict(type="text", value=f.read())]
-        #print(res)
         return res
         
     def evaluate(self, eval_file, **judge_kwargs):

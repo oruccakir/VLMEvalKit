@@ -113,6 +113,7 @@ class BaseModel:
         assert message is not None and self.check_content(message) == 'listdict'
         for item in message:
             assert item['type'] in self.allowed_types, f'Invalid input type: {item["type"]}'
+
         return self.generate_inner(message, dataset,category)
 
     def chat(self, messages, dataset=None):
