@@ -13,6 +13,7 @@ class CustomDataset:
     names = [x for x in os.listdir(os.environ["LUMINA"]+"/Datasets/") if os.path.isfile(os.environ["LUMINA"]+"/Datasets/"+x+"/dataset_info.json")]
     def __init__(self, dataset="CustomDataset", **kwargs):
         ROOT = LMUDataRoot()
+        self.idx = 0
         # You can override this variable to save image files to a different directory
         if "QUERY_FILE" not in os.environ:
             self.names = [x for x in os.listdir(os.environ["LUMINA"]+"/Datasets/") if os.path.isfile(os.environ["LUMINA"]+"/Datasets/"+x+"/dataset_info.json")]
@@ -105,6 +106,8 @@ Question: {el["question"]}"""
             file = os.environ["QUERY_FILE"]
             with open(file, "r") as f:
                 res = [dict(type="text", value=f.read())]
+        self.idx += 1
+        os.environ["CURRENT_DATASET_INDEX"] = str(self.idx)
         return res
         
     def evaluate(self, eval_file, **judge_kwargs):

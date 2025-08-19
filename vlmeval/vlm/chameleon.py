@@ -80,13 +80,14 @@ class Chameleon(BaseModel):
         self.model.generation_config.max_new_tokens =10000
 
         self.save_embeddings_by_category = False
+        self.save_embeddings = False
         if self.save_embeddings:
             embedd_dir_path=f"{CHAMELEON_MODEL_EMBEDDINS_DIR_PATH}/{dataset}"
             if not os.path.exists(embedd_dir_path):
                 os.makedirs(embedd_dir_path)
             
             if self.save_embeddings_by_category == False:
-                embedding_file_path = f"{embedd_dir_path}/embedding_{self.idx}.bin"
+                embedding_file_path = f"{os.environ["EMBEDDING_DIR_PATH"]}/embedding_{os.environ["CURRENT_DATASET_INDEX"]}.bin"
                 self.idx += 1
 
                 self.compute_and_save_embeddings(inputs,embedding_file_path)
@@ -109,11 +110,14 @@ class Chameleon(BaseModel):
 
         generate_ids = self.model.generate(**inputs, max_new_tokens=4096)
         input_token_len = inputs.input_ids.shape[1]
-        text = self.processor.batch_decode(
-            generate_ids[:, input_token_len:],
-            skip_special_tokens=True,
-            clean_up_tokenization_spaces=False
-        )[0]
+        try:
+            text = self.processor.batch_decode(
+                generate_ids[:, input_token_len:],
+                skip_special_tokens=True,
+                clean_up_tokenization_spaces=False
+            )[0]
+        except:
+            return
 
         if self.get_weight_distribution and input_activation_dir_path is not None:
             self.model.model.save_all_input_activations(input_activation_dir_path)
