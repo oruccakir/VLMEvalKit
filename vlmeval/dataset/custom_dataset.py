@@ -1,4 +1,5 @@
 from datasets import Dataset, load_from_disk
+import json
 from PIL import Image
 from IPython.display import display
 from io import BytesIO
@@ -11,6 +12,7 @@ class CustomDataset:
     TYPE = "MIX"
     MODALITY = "MIX"
     names = [x for x in os.listdir(os.environ["LUMINA"]+"/Datasets/") if os.path.isfile(os.environ["LUMINA"]+"/Datasets/"+x+"/dataset_info.json")]
+    is_raw = False
     def __init__(self, dataset="CustomDataset", **kwargs):
         ROOT = LMUDataRoot()
         self.idx = 0
@@ -26,11 +28,20 @@ class CustomDataset:
         else:
             self.name = self.names[0]
         self.dataset_name = dataset + "_" + self.name
+        os.environ["DATASET_NAME"] = self.dataset_name
         self.img_root = osp.join(ROOT, 'images', self.dataset_name)
         if not os.path.exists(self.img_root):
             os.makedirs(self.img_root)
-        file = f"{os.environ["LUMINA"]}/Datasets/" + self.name
-        self.data = pd.DataFrame(load_from_disk(file))
+        file = f"{os.environ['LUMINA']}/Datasets/" + self.name
+        self.dataset = load_from_disk(file)
+        try:
+            metadata = json.loads(self.dataset.info.description)
+            if "mode" in metadata and metadata["mode"] == "raw":
+                self.is_raw = True
+                print("Dataset mode set to raw.")
+        except:
+            pass
+        self.data = pd.DataFrame(self.dataset)
         self.n = len(self.data["question"])
         self.data["index"] = [i for i in range(self.n)]
         self.data["category"] = ["0" for i in range(self.n)]
@@ -45,15 +56,14 @@ class CustomDataset:
         if len(el["choices"]) != 0:
             txt = f"""Choose the option that best answers the folowing question. Don't justify or explain the answer. Answer with a single character: A, B, C or D.
 Question: {el['question']}
-Options:\n A: {el['choices'][0]}\n B: '{el['choices'][1]}'"""
+Options:\nA: {el['choices'][0]}\nB: '{el['choices'][1]}'"""
             if len(el['choices']) > 2:
-                txt += f"\n C: '{el['choices'][2]}'"
+                txt += f"\nC: '{el['choices'][2]}'"
             if len(el['choices']) > 3:
-                txt += f"\n D: '{el['choices'][3]}'"
+                txt += f"\nD: '{el['choices'][3]}'"
             return txt
         else:
-            txt = f"""Answer the following question to the best of your capabilities.
-Question: {el["question"]}"""
+            txt = f"""{el['question']}"""
             return txt
     
     def build_prompt(self, line):
@@ -63,39 +73,17 @@ Question: {el["question"]}"""
             images = line["image"]
             print("NUMBER OF IMAGES:",len(images))
             image_paths = []
+            for idx, img in enumerate(images):
+                Image.open(BytesIO(img["bytes"])).save(osp.join(self.img_root, str(line["index"]) + "_" + str(idx) + ".png"))
+                image_paths.append(osp.join(self.img_root, str(line["index"]) + "_" + str(idx) + ".png"))
             if len(images):
-                add_placeholder = ""
-                holders = []
-                """ptr = 0
-                while True:
-                    ptr = question.find("<image_", ptr)
-                    if ptr == -1: break
-                    try:
-                        num = int(question[ptr:].split("_")[1].split(">")[0])
-                        holders.append(num)
-                        question = question.replace(f"<image_{num}>", "<image_placeholder>")
-                    except:
-                        pass
-                    ptr += 1"""
-                for i in range(len(images)-len(holders)):
-                    add_placeholder += "<image_placeholder>"
-                assert len(images)==len(holders) or len(holders)==0
-                question = f"You are a helpful asistant that can understand the images provided by the User and answer the questions asked.\nImages:{add_placeholder}\n{question}\n"
-                #print(question)
-                idx = 0
-                if len(holders) == 0:
-                    for img in images:
-                        Image.open(BytesIO(img["bytes"])).save(osp.join(self.img_root, str(line["index"]) + "_" + str(idx) + ".png"))
-                        image_paths.append(osp.join(self.img_root, str(line["index"]) + "_" + str(idx) + ".png"))
-                        idx += 1
-                else:
-                    for idx in holders:
-                        img = images[idx]
-                        Image.open(BytesIO(img["bytes"])).save(osp.join(self.img_root, str(line["index"]) + "_" + str(idx) + ".png"))
-                        image_paths.append(osp.join(self.img_root, str(line["index"]) + "_" + str(idx) + ".png"))
+                question = f"You are a helpful asistant that can understand the images provided by the User and answer the questions asked.\nUser: {"<image_placeholder>"*len(images)}\n{question}\nAssistant:"
             else:
-                question = f"You are a helpful asistant that can understand the input provided by the User and answer the questions asked.\n{question}"
+                question = f"You are a helpful asistant that can understand the input provided by the User and answer the questions asked.\nUser: {question}\nAssistant:"
+            if self.is_raw:
+                question = ("<image_placeholder>"*len(images)) + line["question"]
             parts = question.split("<image_placeholder>")
+            assert len(parts) == len(images)+1
             for i in range(len(image_paths)):
                 if len(parts[i])>0:
                     res.append(dict(type='text', value=parts[i]))
