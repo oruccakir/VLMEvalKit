@@ -87,7 +87,7 @@ class Chameleon(BaseModel):
                 os.makedirs(embedd_dir_path)
             
             if self.save_embeddings_by_category == False:
-                embedding_file_path = f"{os.environ["EMBEDDING_DIR_PATH"]}/embedding_{os.environ["CURRENT_DATASET_INDEX"]}.bin"
+                embedding_file_path = f"{os.environ['EMBEDDING_DIR_PATH']}/embedding_{os.environ['CURRENT_DATASET_INDEX']}.bin"
                 self.idx += 1
 
                 self.compute_and_save_embeddings(inputs,embedding_file_path)

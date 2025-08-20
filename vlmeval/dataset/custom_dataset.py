@@ -1,7 +1,6 @@
 from datasets import Dataset, load_from_disk
 import json
 from PIL import Image
-from IPython.display import display
 from io import BytesIO
 import pandas as pd
 from vlmeval.smp.vlm import encode_image_to_base64
@@ -77,7 +76,7 @@ Options:\nA: {el['choices'][0]}\nB: '{el['choices'][1]}'"""
                 Image.open(BytesIO(img["bytes"])).save(osp.join(self.img_root, str(line["index"]) + "_" + str(idx) + ".png"))
                 image_paths.append(osp.join(self.img_root, str(line["index"]) + "_" + str(idx) + ".png"))
             if len(images):
-                question = f"You are a helpful asistant that can understand the images provided by the User and answer the questions asked.\nUser: {"<image_placeholder>"*len(images)}\n{question}\nAssistant:"
+                question = f"You are a helpful asistant that can understand the images provided by the User and answer the questions asked.\nUser: {'<image_placeholder>'*len(images)}\n{question}\nAssistant:"
             else:
                 question = f"You are a helpful asistant that can understand the input provided by the User and answer the questions asked.\nUser: {question}\nAssistant:"
             if self.is_raw:
