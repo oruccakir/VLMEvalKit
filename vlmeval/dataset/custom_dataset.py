@@ -34,13 +34,16 @@ class CustomDataset:
         file = f"{os.environ['LUMINA']}/Datasets/" + self.name
         self.dataset = load_from_disk(file)
         try:
-            metadata = json.loads(self.dataset.info.description)
+            metadata = {}
+            with open(f'{file}/metadata.json') as f:
+                metadata = json.load(f)
             if "mode" in metadata and metadata["mode"] == "raw":
                 self.is_raw = True
                 print("Dataset mode set to raw.")
         except:
             pass
         self.data = pd.DataFrame(self.dataset)
+        #print(self.data)
         self.n = len(self.data["question"])
         self.data["index"] = [i for i in range(self.n)]
         self.data["category"] = ["0" for i in range(self.n)]
@@ -82,6 +85,7 @@ Options:\nA: {el['choices'][0]}\nB: '{el['choices'][1]}'"""
             if self.is_raw:
                 question = ("<image_placeholder>"*len(images)) + line["question"]
             parts = question.split("<image_placeholder>")
+            #print(f'"{line["question"]}", "{question}"')
             assert len(parts) == len(images)+1
             for i in range(len(image_paths)):
                 if len(parts[i])>0:
@@ -95,6 +99,8 @@ Options:\nA: {el['choices'][0]}\nB: '{el['choices'][1]}'"""
                 res = [dict(type="text", value=f.read())]
         self.idx += 1
         os.environ["CURRENT_DATASET_INDEX"] = str(self.idx)
+        if len(res) == 0:
+            raise ValueError("No input, no images and raw mode is not a valid combination.")
         return res
         
     def evaluate(self, eval_file, **judge_kwargs):
